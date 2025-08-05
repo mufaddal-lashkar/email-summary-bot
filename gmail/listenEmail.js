@@ -138,6 +138,7 @@ async function summarizeAndSend(email, retries = 0) {
 export async function readEmails() {
     const auth = await authenticate();
     const gmail = google.gmail({ version: 'v1', auth });
+    const processedIds = new Set();
 
     // 👇 Use dynamic yesterday filter if needed
     const res = await gmail.users.messages.list({
@@ -192,12 +193,16 @@ export async function readEmails() {
 
     for (let i = 0; i < filteredEmails.length; i++) {
         const email = filteredEmails[i];
+        if (processedIds.has(email.id)) {
+            continue; // Skip duplicates
+        }
         console.log(`#${i + 1}`);
         console.log('From:', email.from);
         console.log('Subject:', email.subject);
         console.log('Snippet:', email.body);
         console.log('---\n');
 
+        processedIds.add(email.id);
         await summarizeAndSend(email);
     }
 }
